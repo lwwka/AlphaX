@@ -1,0 +1,44 @@
+app:
+  name: AlphaX
+  timezone: Asia/Taipei
+
+twitter:
+  api_base_url: https://api.twitterapi.io
+  api_key_env: TWITTERAPI_IO_API_KEY
+  lookback_hours: 24
+  timeout_seconds: 20
+  max_retries: 3
+
+llm:
+  provider: openrouter
+  api_base_url: https://openrouter.ai/api/v1
+  api_key_env: OPENROUTER_API_KEY
+  sentiment_model: mistralai/mistral-small-3.2-24b-instruct
+  report_model: google/gemini-2.5-flash
+  timeout_seconds: 45
+  max_retries: 2
+
+thresholds:
+  strong_buy: 0.6
+  buy: 0.3
+  sell: -0.3
+  strong_sell: -0.6
+
+signal_rules:
+  volume_boost: 0.3
+  volume_trigger_ratio: 1.5
+  require_price_confirmation_for_strong: true
+
+markets:
+  benchmarks:
+    - ^HSI
+    - ^GSPC
+
+paths:
+  raw_tweets_dir: data/raw/tweets
+  raw_prices_dir: data/raw/prices
+  sentiment_dir: data/processed/sentiment
+  signals_dir: data/processed/signals
+  reports_dir: data/reports
+  cache_dir: data/cache
+  logs_dir: data/logs

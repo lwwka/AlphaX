@@ -1,0 +1,31 @@
+# 每日投資信號報告 — {{ report_date }}
+
+## 摘要
+{{ summary }}
+
+## 信號匯總
+| 股票 | 信號 | 分數 | 主要觸發 |
+|------|------|------|---------|
+{% for row in signal_rows %}
+| {{ row.symbol }} | {{ row.signal }} | {{ row.score }} | {{ row.trigger }} |
+{% endfor %}
+
+## 信號詳情
+{% for item in details %}
+### {{ item.symbol }} — {{ item.signal }}
+- 觸發推文：@{{ item.handle }} | {{ item.tweet_time }}
+- 推文內容：{{ item.tweet_text }}
+- 情緒分數：{{ item.sentiment_score }}（{{ item.sentiment_label }}）
+- 情緒說明：{{ item.rationale }}
+- 信號類型：{{ item.signal_type }}
+- 股價：{{ item.price_close }}（{{ item.price_change_pct }}%）
+- 成交量：{{ item.volume }}（20 日均量 {{ item.avg_20d_volume }}）
+- 資料來源：{{ item.price_source }}
+- 計算：{{ item.explain }}
+
+{% endfor %}
+## 模型與來源
+- provider: {{ provider }}
+- sentiment_model: {{ sentiment_model }}
+- report_model: {{ report_model }}
+- ⚠️ 本報告非投資建議，所有信號為算法生成，請獨立核實。

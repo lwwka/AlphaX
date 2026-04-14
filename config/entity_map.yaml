@@ -1,0 +1,33 @@
+rules:
+  - keyword: Tesla
+    symbol: TSLA
+    market: US
+    confidence: 0.95
+  - keyword: NVDA
+    symbol: NVDA
+    market: US
+    confidence: 0.90
+  - keyword: Nvidia
+    symbol: NVDA
+    market: US
+    confidence: 0.95
+  - keyword: Apple
+    symbol: AAPL
+    market: US
+    confidence: 0.95
+  - keyword: Bitcoin
+    symbol: MSTR
+    market: US
+    confidence: 0.80
+  - keyword: tariff
+    symbol: FXI
+    market: ETF
+    confidence: 0.75
+  - keyword: Tencent
+    symbol: 0700.HK
+    market: HK
+    confidence: 0.95
+  - keyword: Alibaba
+    symbol: 9988.HK
+    market: HK
+    confidence: 0.95

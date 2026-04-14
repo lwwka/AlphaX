@@ -1,0 +1,18 @@
+accounts:
+  - handle: realDonaldTrump
+    user_id: "25073877"
+    weight: 1.0
+    focus:
+      - 政策
+      - 貿易
+      - 關稅
+      - 能源
+  - handle: elonmusk
+    user_id: "44196397"
+    weight: 1.0
+    focus:
+      - 科技
+      - 電動車
+      - 加密貨幣
+      - AI
+      - 航天
