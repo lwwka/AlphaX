@@ -15,16 +15,40 @@ and generates auditable daily reports.
 
 ## Setup
 
-1. Create a virtual environment.
-2. Install dependencies:
+1. Go into the project folder:
 
 ```bash
+cd /YourFolder/AlphaX
+```
+
+2. Recreate the virtual environment with Python 3.12:
+
+```bash
+rm -rf .venv
+python3.12 -m venv .venv
+source .venv/bin/activate
+```
+
+3. Upgrade `pip` and install dependencies:
+
+```bash
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-3. Copy `.env.example` to `.env` and fill in your API keys.
-4. Adjust configs under `config/`.
-5. Run the daily pipeline:
+4. Copy `.env.example` to `.env` and fill in your API keys:
+
+```bash
+cp .env.example .env
+```
+
+Required keys:
+
+- `TWITTERAPI_IO_API_KEY`
+- `OPENROUTER_API_KEY`
+
+5. Adjust configs under `config/` if needed.
+6. Run the daily pipeline:
 
 ```bash
 python scripts/run_daily.py

@@ -3,6 +3,26 @@ rules:
     symbol: TSLA
     market: US
     confidence: 0.95
+  - keyword: TSLA
+    symbol: TSLA
+    market: US
+    confidence: 0.95
+  - keyword: SpaceX
+    symbol: TSLA
+    market: US
+    confidence: 0.55
+  - keyword: Starlink
+    symbol: TSLA
+    market: US
+    confidence: 0.55
+  - keyword: Grok
+    symbol: TSLA
+    market: US
+    confidence: 0.55
+  - keyword: xAI
+    symbol: TSLA
+    market: US
+    confidence: 0.55
   - keyword: NVDA
     symbol: NVDA
     market: US
@@ -11,18 +31,66 @@ rules:
     symbol: NVDA
     market: US
     confidence: 0.95
+  - keyword: GPU
+    symbol: NVDA
+    market: US
+    confidence: 0.75
+  - keyword: chips
+    symbol: NVDA
+    market: US
+    confidence: 0.65
+  - keyword: semiconductor
+    symbol: NVDA
+    market: US
+    confidence: 0.70
+  - keyword: AI
+    symbol: NVDA
+    market: US
+    confidence: 0.60
   - keyword: Apple
     symbol: AAPL
     market: US
     confidence: 0.95
+  - keyword: iPhone
+    symbol: AAPL
+    market: US
+    confidence: 0.85
   - keyword: Bitcoin
     symbol: MSTR
     market: US
     confidence: 0.80
+  - keyword: BTC
+    symbol: MSTR
+    market: US
+    confidence: 0.80
+  - keyword: Dogecoin
+    symbol: COIN
+    market: US
+    confidence: 0.60
+  - keyword: crypto
+    symbol: COIN
+    market: US
+    confidence: 0.60
   - keyword: tariff
     symbol: FXI
     market: ETF
     confidence: 0.75
+  - keyword: tariffs
+    symbol: FXI
+    market: ETF
+    confidence: 0.75
+  - keyword: trade war
+    symbol: FXI
+    market: ETF
+    confidence: 0.75
+  - keyword: China
+    symbol: FXI
+    market: ETF
+    confidence: 0.60
+  - keyword: Chinese
+    symbol: FXI
+    market: ETF
+    confidence: 0.60
   - keyword: Tencent
     symbol: 0700.HK
     market: HK
@@ -31,3 +99,7 @@ rules:
     symbol: 9988.HK
     market: HK
     confidence: 0.95
+  - keyword: BABA
+    symbol: 9988.HK
+    market: HK
+    confidence: 0.90

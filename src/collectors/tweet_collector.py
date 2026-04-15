@@ -20,6 +20,7 @@ def collect_recent_tweets(
         api_key=api_key,
         timeout_seconds=int(twitter_settings.get("timeout_seconds", 20)),
         max_retries=int(twitter_settings.get("max_retries", 3)),
+        min_request_interval_seconds=float(twitter_settings.get("min_request_interval_seconds", 5)),
     )
 
     lookback_hours = int(twitter_settings.get("lookback_hours", 24))
@@ -31,7 +32,7 @@ def collect_recent_tweets(
 
     for account in accounts:
         try:
-            tweets = client.fetch_user_tweets(account.user_id, start_time, end_time)
+            tweets = client.fetch_user_tweets(account.user_id, account.handle, start_time, end_time)
         except Exception as exc:
             logger.warning("tweet fetch failed for @%s: %s", account.handle, exc)
             continue
@@ -86,5 +87,13 @@ def _parse_datetime(value: Any) -> datetime:
         return value
     if not value:
         return datetime.now(timezone.utc)
-    text = str(value).replace("Z", "+00:00")
-    return datetime.fromisoformat(text)
+    text = str(value).strip()
+
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        parsed = datetime.strptime(text, "%a %b %d %H:%M:%S %z %Y")
+
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed
