@@ -29,6 +29,8 @@ class TwitterApiClient:
         user_name: str | None,
         start_time: datetime,
         end_time: datetime,
+        max_pages: int | None = None,
+        stop_at_tweet_id: str | None = None,
     ) -> list[dict[str, Any]]:
         headers = {"X-API-Key": self.api_key}
         params: dict[str, Any] = {"includeReplies": "false"}
@@ -41,6 +43,7 @@ class TwitterApiClient:
 
         tweets: list[dict[str, Any]] = []
         cursor = ""
+        pages_fetched = 0
         with httpx.Client(base_url=self.base_url, timeout=self.timeout_seconds) as client:
             while True:
                 response = self._get_with_retry(
@@ -51,6 +54,7 @@ class TwitterApiClient:
                 )
                 payload = response.json()
                 page = self._extract_tweets(payload)
+                pages_fetched += 1
                 tweets.extend(
                     tweet
                     for tweet in page
@@ -60,6 +64,10 @@ class TwitterApiClient:
                 has_next_page = bool(payload.get("has_next_page"))
                 next_cursor = str(payload.get("next_cursor") or "").strip()
                 if not has_next_page or not next_cursor:
+                    break
+                if max_pages is not None and pages_fetched >= max_pages:
+                    break
+                if stop_at_tweet_id and any(str(tweet.get("id") or tweet.get("tweet_id") or "") == stop_at_tweet_id for tweet in page):
                     break
                 if page and all(self._parse_created_at(tweet.get("createdAt")) < start_time for tweet in page):
                     break

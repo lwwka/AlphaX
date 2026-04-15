@@ -54,6 +54,12 @@ Required keys:
 python scripts/run_daily.py
 ```
 
+Generated reports are written to `data/reports/` in `md`, `html`, `csv`, `xlsx`, and `docx` formats.
+The report summary is also written in a more natural research-note style so it is easier to share with non-technical readers.
+Reports now include extra analysis sections such as executive takeaway, key drivers, caveats, and next-day watch items.
+
+To reduce Twitter API cost, the default config limits each account to `1` page per run and stores `last_seen` state in `data/cache/twitter_state.json` for incremental fetching.
+
 ## Notes
 
 - This tool is not investment advice.

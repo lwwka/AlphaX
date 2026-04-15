@@ -3,6 +3,30 @@
 ## 摘要
 {{ summary }}
 
+## 本次覆蓋情況
+- 推文數：{{ tweet_count }}
+- 情緒分析數：{{ sentiment_count }}
+- 信號數：{{ signal_count }}
+- 說明：{{ coverage_note }}
+
+## 一句話結論
+{{ analysis.executive_takeaway }}
+
+## 核心驅動
+{% for line in analysis.drivers %}
+- {{ line }}
+{% endfor %}
+
+## 風險與保留
+{% for line in analysis.risks %}
+- {{ line }}
+{% endfor %}
+
+## 明日追蹤
+{% for line in analysis.watch_items %}
+- {{ line }}
+{% endfor %}
+
 ## 信號匯總
 | 股票 | 信號 | 分數 | 主要觸發 |
 |------|------|------|---------|

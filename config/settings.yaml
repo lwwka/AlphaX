@@ -9,6 +9,7 @@ twitter:
   timeout_seconds: 20
   max_retries: 3
   min_request_interval_seconds: 5
+  max_pages_per_account: 1
 
 llm:
   provider: openrouter
@@ -42,4 +43,5 @@ paths:
   signals_dir: data/processed/signals
   reports_dir: data/reports
   cache_dir: data/cache
+  twitter_state_path: data/cache/twitter_state.json
   logs_dir: data/logs

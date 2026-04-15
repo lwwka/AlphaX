@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from src.clients.twitterapi_client import TwitterApiClient
 from src.models.schemas import AccountConfig, TweetRecord
-from src.utils.io import write_json
+from src.utils.io import read_json, write_json
 
 
 def collect_recent_tweets(
@@ -24,38 +25,97 @@ def collect_recent_tweets(
     )
 
     lookback_hours = int(twitter_settings.get("lookback_hours", 24))
+    max_pages_per_account = int(twitter_settings.get("max_pages_per_account", 1))
     end_time = datetime.now(timezone.utc)
     start_time = end_time - timedelta(hours=lookback_hours)
+    state_path = Path(settings["paths"].get("twitter_state_path", f'{settings["paths"]["cache_dir"]}/twitter_state.json'))
+    state = _load_twitter_state(state_path)
     records: list[TweetRecord] = []
     raw_payload: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
+    updated_state = dict(state)
 
     for account in accounts:
+        account_state = state.get(account.handle, {})
+        last_seen_id = str(account_state.get("last_seen_tweet_id") or "")
+        last_seen_at = _parse_datetime(account_state.get("last_seen_created_at")) if account_state.get("last_seen_created_at") else None
+        fetch_start_time = max(start_time, last_seen_at or start_time)
+
         try:
-            tweets = client.fetch_user_tweets(account.user_id, account.handle, start_time, end_time)
+            tweets = client.fetch_user_tweets(
+                account.user_id,
+                account.handle,
+                fetch_start_time,
+                end_time,
+                max_pages=max_pages_per_account,
+                stop_at_tweet_id=last_seen_id or None,
+            )
         except Exception as exc:
             logger.warning("tweet fetch failed for @%s: %s", account.handle, exc)
             continue
 
+        newest_tweet: TweetRecord | None = None
         for item in tweets:
             raw_payload.append({"account": account.handle, "tweet": item})
             tweet = _normalize_tweet(item, account)
             if tweet is None or tweet.tweet_id in seen_ids:
                 continue
+            if _is_already_seen(tweet, last_seen_id, last_seen_at):
+                continue
             seen_ids.add(tweet.tweet_id)
             records.append(tweet)
+            if newest_tweet is None or tweet.created_at > newest_tweet.created_at:
+                newest_tweet = tweet
+
+        if newest_tweet is not None:
+            updated_state[account.handle] = {
+                "user_id": account.user_id,
+                "last_seen_tweet_id": newest_tweet.tweet_id,
+                "last_seen_created_at": newest_tweet.created_at.isoformat(),
+                "updated_at": end_time.isoformat(),
+            }
+        elif account.handle not in updated_state:
+            updated_state[account.handle] = {
+                "user_id": account.user_id,
+                "last_seen_tweet_id": last_seen_id,
+                "last_seen_created_at": last_seen_at.isoformat() if last_seen_at else None,
+                "updated_at": end_time.isoformat(),
+            }
 
     output_path = f'{settings["paths"]["raw_tweets_dir"]}/{end_time.date().isoformat()}.json'
     write_json(output_path, raw_payload)
+    write_json(state_path, updated_state)
     logger.info("collected %s tweets", len(records))
     return records
+
+
+def _load_twitter_state(path: Path) -> dict[str, dict[str, Any]]:
+    if not path.exists():
+        return {}
+    try:
+        payload = read_json(path)
+    except Exception:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _is_already_seen(tweet: TweetRecord, last_seen_id: str, last_seen_at: datetime | None) -> bool:
+    if last_seen_at is None:
+        return False
+    if tweet.created_at < last_seen_at:
+        return True
+    if tweet.created_at == last_seen_at and last_seen_id and tweet.tweet_id == last_seen_id:
+        return True
+    return False
 
 
 def _normalize_tweet(raw: dict[str, Any], account: AccountConfig) -> TweetRecord | None:
     text = str(raw.get("text") or raw.get("full_text") or "").strip()
     if not text:
         return None
-    if raw.get("isRetweet") or raw.get("retweeted"):
+    if raw.get("isRetweet") or raw.get("retweeted") or raw.get("retweeted_tweet"):
+        return None
+    if text.startswith("RT @"):
         return None
     if raw.get("isReply") or raw.get("inReplyToStatusId"):
         return None

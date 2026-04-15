@@ -57,16 +57,20 @@ class LLMClient:
         return parsed
 
     def generate_report_summary(self, context: dict[str, Any]) -> str:
-        payload = {"model": self.report_model, "context": context, "task": "daily_report_summary_v1"}
+        payload = {"model": self.report_model, "context": context, "task": "daily_report_summary_v2"}
         cache_key = make_cache_key(payload)
         cached = get_cache(cache_key, self.cache_dir)
         if cached is not None and isinstance(cached, dict):
             return str(cached.get("summary", ""))
 
         system_prompt = (
-            "You are writing a concise market signal summary. "
-            "Do not invent data. Use a neutral research tone. "
-            "Return plain markdown only."
+            "You are writing a short buy-side morning note in Traditional Chinese for a human reader. "
+            "Do not invent data. Only use facts from the provided context. "
+            "Write in plain, natural language and avoid robotic repetition. "
+            "State when multiple signals come from the same theme or source instead of pretending they are independent. "
+            "If proxy mappings are likely, mention that as a caveat. "
+            "If there are no clear signals, explain why in a calm research tone. "
+            "Return markdown with 3 to 5 short paragraphs and no tables."
         )
         response = self.client.chat.completions.create(
             model=self.report_model,
