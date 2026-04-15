@@ -8,6 +8,7 @@ twitter:
   lookback_hours: 24
   timeout_seconds: 20
   max_retries: 3
+  min_request_interval_seconds: 5
 
 llm:
   provider: openrouter

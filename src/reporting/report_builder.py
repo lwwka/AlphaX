@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import asdict
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markdown import markdown
@@ -36,8 +38,9 @@ def build_daily_report(
     html_content = markdown(markdown_content, extensions=["tables", "fenced_code"])
 
     reports_dir = settings["paths"]["reports_dir"]
-    md_path = f"{reports_dir}/daily_{report_date}.md"
-    html_path = f"{reports_dir}/daily_{report_date}.html"
+    filename_suffix = _build_report_filename_suffix(report_date, settings)
+    md_path = f"{reports_dir}/daily_{filename_suffix}.md"
+    html_path = f"{reports_dir}/daily_{filename_suffix}.html"
     write_text(md_path, markdown_content)
     write_text(html_path, html_content)
     return {"markdown": md_path, "html": html_path}
@@ -134,3 +137,12 @@ def _build_context(
         "sentiment_model": settings["llm"]["sentiment_model"],
         "report_model": settings["llm"]["report_model"],
     }
+
+
+def _build_report_filename_suffix(report_date: str, settings: dict[str, Any]) -> str:
+    timezone_name = settings.get("app", {}).get("timezone", "UTC")
+    try:
+        now = datetime.now(ZoneInfo(timezone_name))
+    except Exception:
+        now = datetime.now(timezone.utc)
+    return f"{report_date}_{now.strftime('%H%M%S')}"
