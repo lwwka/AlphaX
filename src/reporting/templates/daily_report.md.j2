@@ -46,6 +46,7 @@
 {% for item in details %}
 ### {{ item.symbol }} — {{ item.signal }}
 - 觸發推文：@{{ item.handle }} | {{ item.tweet_time }}
+- 內容來源：{{ item.source_type }}（來源權重 {{ item.source_weight }}）
 - 推文內容：{{ item.tweet_text }}
 - 情緒分數：{{ item.sentiment_score }}（{{ item.sentiment_label }}）
 - 情緒說明：{{ item.rationale }}

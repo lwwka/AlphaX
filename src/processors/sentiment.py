@@ -26,12 +26,15 @@ def score_sentiment(
     )
     account_focus = {account.handle: account.focus for account in accounts}
     tweet_index = {tweet.tweet_id: tweet for tweet in tweets}
+    source_weights = settings.get("tweet_source_weights", {})
 
     batch_items: list[dict[str, Any]] = []
     for tweet_id, matches in entity_matches.items():
         tweet = tweet_index.get(tweet_id)
         if tweet is None:
             continue
+        source_type = tweet.source_type
+        source_weight = _source_weight(source_type, source_weights)
         for match in matches:
             batch_items.append(
                 {
@@ -41,6 +44,8 @@ def score_sentiment(
                     "symbol": match.symbol,
                     "match_type": match.match_type,
                     "focus": account_focus.get(tweet.handle, []),
+                    "source_type": source_type,
+                    "source_weight": source_weight,
                 }
             )
 
@@ -62,6 +67,8 @@ def score_sentiment(
                 signal_type="analysis_failed",
                 provider=llm_settings["provider"],
                 model=llm_settings["sentiment_model"],
+                source_type=item["source_type"],
+                source_weight=item["source_weight"],
             )
             for item in batch_items
         ]
@@ -80,6 +87,8 @@ def score_sentiment(
                 signal_type=str(raw.get("signal_type", "generic")),
                 provider=llm_settings["provider"],
                 model=llm_settings["sentiment_model"],
+                source_type=item["source_type"],
+                source_weight=item["source_weight"],
             )
         )
     return results
@@ -99,3 +108,10 @@ def _label_from_score(score: float) -> str:
     if score <= -0.3:
         return "bearish"
     return "neutral"
+
+
+def _source_weight(source_type: str, weights: dict[str, Any]) -> float:
+    try:
+        return float(weights.get(source_type, weights.get("original", 1.0)))
+    except (TypeError, ValueError):
+        return 1.0

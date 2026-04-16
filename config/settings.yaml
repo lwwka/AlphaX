@@ -6,10 +6,17 @@ twitter:
   api_base_url: https://api.twitterapi.io
   api_key_env: TWITTERAPI_IO_API_KEY
   lookback_hours: 24
+  include_replies: true
   timeout_seconds: 20
   max_retries: 3
   min_request_interval_seconds: 5
   max_pages_per_account: 1
+
+tweet_source_weights:
+  original: 1.0
+  quote: 0.8
+  retweet: 0.5
+  reply: 0.3
 
 llm:
   provider: openrouter

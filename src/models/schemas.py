@@ -20,6 +20,7 @@ class TweetRecord:
     user_id: str
     text: str
     created_at: datetime
+    source_type: str = "original"
     lang: str | None = None
     metrics: dict[str, Any] = field(default_factory=dict)
 
@@ -56,6 +57,8 @@ class SentimentResult:
     signal_type: str
     provider: str
     model: str
+    source_type: str = "original"
+    source_weight: float = 1.0
 
 
 @dataclass(slots=True)
@@ -67,6 +70,8 @@ class SignalResult:
     final_score: float
     signal: str
     account_weight: float
+    source_type: str
+    source_weight: float
     volume_factor: float
     price_confirmed: bool
     explain: str

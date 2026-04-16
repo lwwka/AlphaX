@@ -29,11 +29,12 @@ class TwitterApiClient:
         user_name: str | None,
         start_time: datetime,
         end_time: datetime,
+        include_replies: bool = False,
         max_pages: int | None = None,
         stop_at_tweet_id: str | None = None,
     ) -> list[dict[str, Any]]:
         headers = {"X-API-Key": self.api_key}
-        params: dict[str, Any] = {"includeReplies": "false"}
+        params: dict[str, Any] = {"includeReplies": str(include_replies).lower()}
         if user_id:
             params["userId"] = user_id
         elif user_name:

@@ -26,6 +26,7 @@ def collect_recent_tweets(
 
     lookback_hours = int(twitter_settings.get("lookback_hours", 24))
     max_pages_per_account = int(twitter_settings.get("max_pages_per_account", 1))
+    include_replies = bool(twitter_settings.get("include_replies", False))
     end_time = datetime.now(timezone.utc)
     start_time = end_time - timedelta(hours=lookback_hours)
     state_path = Path(settings["paths"].get("twitter_state_path", f'{settings["paths"]["cache_dir"]}/twitter_state.json'))
@@ -47,6 +48,7 @@ def collect_recent_tweets(
                 account.handle,
                 fetch_start_time,
                 end_time,
+                include_replies=include_replies,
                 max_pages=max_pages_per_account,
                 stop_at_tweet_id=last_seen_id or None,
             )
@@ -110,14 +112,9 @@ def _is_already_seen(tweet: TweetRecord, last_seen_id: str, last_seen_at: dateti
 
 
 def _normalize_tweet(raw: dict[str, Any], account: AccountConfig) -> TweetRecord | None:
-    text = str(raw.get("text") or raw.get("full_text") or "").strip()
+    source_type = _classify_source_type(raw)
+    text = _extract_business_text(raw, source_type)
     if not text:
-        return None
-    if raw.get("isRetweet") or raw.get("retweeted") or raw.get("retweeted_tweet"):
-        return None
-    if text.startswith("RT @"):
-        return None
-    if raw.get("isReply") or raw.get("inReplyToStatusId"):
         return None
 
     created_value = raw.get("createdAt") or raw.get("created_at")
@@ -137,9 +134,42 @@ def _normalize_tweet(raw: dict[str, Any], account: AccountConfig) -> TweetRecord
         user_id=account.user_id,
         text=text,
         created_at=created_at,
+        source_type=source_type,
         lang=raw.get("lang"),
         metrics=metrics,
     )
+
+
+def _classify_source_type(raw: dict[str, Any]) -> str:
+    if raw.get("retweeted_tweet") or raw.get("isRetweet") or raw.get("retweeted"):
+        return "retweet"
+    if raw.get("quoted_tweet"):
+        return "quote"
+    if raw.get("isReply") or raw.get("inReplyToStatusId") or raw.get("inReplyToId"):
+        return "reply"
+    text = str(raw.get("text") or raw.get("full_text") or "").strip()
+    if text.startswith("RT @"):
+        return "retweet"
+    return "original"
+
+
+def _extract_business_text(raw: dict[str, Any], source_type: str) -> str:
+    if source_type == "retweet" and isinstance(raw.get("retweeted_tweet"), dict):
+        retweeted = raw["retweeted_tweet"]
+        author = retweeted.get("author") or {}
+        user_name = author.get("userName") or author.get("screen_name") or "unknown"
+        text = str(retweeted.get("text") or retweeted.get("full_text") or "").strip()
+        return f"RT @{user_name}: {text}" if text else ""
+
+    text = str(raw.get("text") or raw.get("full_text") or "").strip()
+    if source_type == "quote" and isinstance(raw.get("quoted_tweet"), dict):
+        quoted = raw["quoted_tweet"]
+        quoted_author = quoted.get("author") or {}
+        user_name = quoted_author.get("userName") or quoted_author.get("screen_name") or "unknown"
+        quoted_text = str(quoted.get("text") or quoted.get("full_text") or "").strip()
+        if quoted_text:
+            return f"{text}\n\nQuoted @{user_name}: {quoted_text}".strip()
+    return text
 
 
 def _parse_datetime(value: Any) -> datetime:

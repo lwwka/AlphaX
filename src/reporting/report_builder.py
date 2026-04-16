@@ -126,6 +126,8 @@ def _build_context(
                 "handle": signal.handle,
                 "tweet_text": tweet.text,
                 "tweet_time": tweet.created_at.isoformat(),
+                "source_type": tweet.source_type,
+                "source_weight": signal.source_weight,
                 "sentiment_score": sentiment.score,
                 "sentiment_label": sentiment.label,
                 "rationale": sentiment.rationale,
@@ -147,7 +149,7 @@ def _build_context(
             "symbol": item.symbol,
             "signal": item.signal,
             "score": round(item.final_score, 3),
-            "trigger": f"@{item.handle}",
+            "trigger": f"@{item.handle} ({item.source_type})",
         }
         for item in signals
     ]
@@ -302,6 +304,7 @@ def _write_word_report(path: str, context: dict[str, Any]) -> None:
     for item in context["details"]:
         document.add_heading(f"{item['symbol']} - {item['signal']}", level=2)
         document.add_paragraph(f"觸發推文：@{item['handle']} | {item['tweet_time']}")
+        document.add_paragraph(f"內容來源：{item['source_type']} | 來源權重：{item['source_weight']}")
         document.add_paragraph(f"推文內容：{item['tweet_text']}")
         document.add_paragraph(
             f"情緒分數：{item['sentiment_score']}（{item['sentiment_label']}） | 信號類型：{item['signal_type']}"
@@ -329,6 +332,8 @@ def _report_columns() -> list[str]:
         "signal",
         "handle",
         "tweet_time",
+        "source_type",
+        "source_weight",
         "tweet_text",
         "sentiment_score",
         "sentiment_label",

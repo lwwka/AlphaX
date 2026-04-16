@@ -23,13 +23,15 @@ def build_signals(
             continue
 
         weight = float(account_weights.get(sentiment.handle, 1.0))
+        source_weight = float(sentiment.source_weight)
         volume_spike_flag = 1 if _volume_spike(price, rules["volume_trigger_ratio"]) else 0
         volume_factor = 1 + (float(rules["volume_boost"]) * volume_spike_flag)
-        raw_score = max(-1.0, min(1.0, sentiment.score * weight * volume_factor))
+        raw_score = max(-1.0, min(1.0, sentiment.score * weight * source_weight * volume_factor))
         price_confirmed = _price_confirms(raw_score, price.change_pct)
         signal = _classify_signal(raw_score, price_confirmed, thresholds, rules)
         explain = (
-            f"raw_score={sentiment.score:.3f} * weight={weight:.2f} * volume_factor={volume_factor:.2f} "
+            f"raw_score={sentiment.score:.3f} * weight={weight:.2f} * "
+            f"source_weight={source_weight:.2f} * volume_factor={volume_factor:.2f} "
             f"=> final={raw_score:.3f}; price_confirmed={price_confirmed}"
         )
         signals.append(
@@ -41,6 +43,8 @@ def build_signals(
                 final_score=raw_score,
                 signal=signal,
                 account_weight=weight,
+                source_type=sentiment.source_type,
+                source_weight=source_weight,
                 volume_factor=volume_factor,
                 price_confirmed=price_confirmed,
                 explain=explain,

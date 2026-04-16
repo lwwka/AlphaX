@@ -13,6 +13,27 @@ and generates auditable daily reports.
 - Calculate rule-based signals with clear audit fields
 - Render Markdown and HTML daily reports
 
+## Tweet Source Weighting
+
+AlphaX keeps original tweets, quote tweets, retweets, and replies because each can carry market intelligence. They are not treated equally:
+
+- `original`: full weight
+- `quote`: strong narrative signal, discounted
+- `retweet`: amplification signal, discounted
+- `reply`: conversational signal, heavily discounted
+
+Configure weights in `config/settings.yaml`:
+
+```yaml
+tweet_source_weights:
+  original: 1.0
+  quote: 0.8
+  retweet: 0.5
+  reply: 0.3
+```
+
+Only tweets that match configured entities are sent to the LLM, keeping API and model costs controlled.
+
 ## Setup
 
 1. Go into the project folder:
