@@ -7,7 +7,15 @@
 - 推文數：{{ tweet_count }}
 - 情緒分析數：{{ sentiment_count }}
 - 信號數：{{ signal_count }}
+- 市場快照數：{{ market_snapshots | length }}
 - 說明：{{ coverage_note }}
+
+## 市場快照
+| 股票 | 價格 | 漲跌幅 | 成交量 | 20 日均量 | 來源 |
+|------|------|--------|--------|-----------|------|
+{% for row in market_snapshots %}
+| {{ row.symbol }} | {{ row.close }} | {{ row.change_pct }}% | {{ row.volume }} | {{ row.avg_20d_volume }} | {{ row.source }} |
+{% endfor %}
 
 ## 一句話結論
 {{ analysis.executive_takeaway }}

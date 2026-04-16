@@ -4,6 +4,7 @@ from datetime import datetime
 
 import yfinance as yf
 
+from src.clients.futu_market_data_client import FutuMarketDataClient
 from src.models.schemas import PriceSnapshot
 
 try:
@@ -13,13 +14,44 @@ except ImportError:  # pragma: no cover
 
 
 class MarketDataClient:
+    def __init__(self, settings: dict | None = None, logger=None) -> None:
+        market_data_settings = (settings or {}).get("market_data", {})
+        self.providers = list(market_data_settings.get("providers", ["yfinance", "akshare"]))
+        self.futu_settings = market_data_settings.get("futu", {})
+        self.logger = logger
+        self._futu_client: FutuMarketDataClient | None = None
+
     def get_price_snapshot(self, symbol: str) -> PriceSnapshot:
-        try:
-            return self._from_yfinance(symbol)
-        except Exception:
-            if symbol.endswith(".HK"):
-                return self._from_akshare(symbol)
-            raise
+        errors: list[str] = []
+        for provider in self.providers:
+            try:
+                if provider == "futu":
+                    return self._from_futu(symbol)
+                if provider == "yfinance":
+                    return self._from_yfinance(symbol)
+                if provider == "akshare":
+                    if symbol.endswith(".HK"):
+                        return self._from_akshare(symbol)
+                    continue
+                errors.append(f"{provider}: unsupported provider")
+            except Exception as exc:
+                errors.append(f"{provider}: {exc}")
+                if self.logger:
+                    self.logger.debug("market data provider failed symbol=%s provider=%s error=%s", symbol, provider, exc)
+
+        raise RuntimeError(f"No market data provider succeeded for {symbol}: {'; '.join(errors)}")
+
+    def close(self) -> None:
+        if self._futu_client is not None:
+            self._futu_client.close()
+
+    def _from_futu(self, symbol: str) -> PriceSnapshot:
+        if self._futu_client is None:
+            self._futu_client = FutuMarketDataClient(
+                host=str(self.futu_settings.get("host", "127.0.0.1")),
+                port=int(self.futu_settings.get("port", 11111)),
+            )
+        return self._futu_client.get_price_snapshot(symbol)
 
     def _from_yfinance(self, symbol: str) -> PriceSnapshot:
         history = yf.Ticker(symbol).history(period="1mo", interval="1d")

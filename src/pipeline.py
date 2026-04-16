@@ -41,7 +41,9 @@ def run_daily_pipeline(run_date: str | None = None) -> dict[str, Any]:
             entity_matches[tweet.tweet_id].extend(map_tweet_entities(tweet, entity_map))
 
         tracked_symbols = {match.symbol for matches in entity_matches.values() for match in matches}
-        tracked_symbols.update(settings.get("markets", {}).get("benchmarks", []))
+        markets = settings.get("markets", {})
+        tracked_symbols.update(markets.get("watchlist", []))
+        tracked_symbols.update(markets.get("benchmarks", []))
         prices = collect_prices(list(tracked_symbols), settings, logger)
 
         sentiments = score_sentiment(tweets, entity_matches, accounts, settings, llm_key, logger)

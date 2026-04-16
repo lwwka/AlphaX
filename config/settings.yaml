@@ -35,6 +35,26 @@ markets:
   benchmarks:
     - ^HSI
     - ^GSPC
+  watchlist:
+    - TSLA
+    - NVDA
+    - AAPL
+    - MSTR
+    - COIN
+    - FXI
+    - 0700.HK
+    - 9988.HK
+
+market_data:
+  # Provider order is failover order. Futu requires a running local OpenD gateway
+  # and quote permissions on the logged-in Futu/Moomoo account.
+  providers:
+    - futu
+    - yfinance
+    - akshare
+  futu:
+    host: 127.0.0.1
+    port: 11111
 
 paths:
   raw_tweets_dir: data/raw/tweets

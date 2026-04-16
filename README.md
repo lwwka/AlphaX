@@ -8,7 +8,7 @@ and generates auditable daily reports.
 
 - Track configurable X accounts from `config/accounts.yaml`
 - Map tweet text to US / HK symbols using regex and keyword rules
-- Pull market data from `yfinance` with `akshare` as HK fallback
+- Pull market data from Futu OpenAPI, with `yfinance` and `akshare` as fallbacks
 - Score sentiment with OpenRouter-hosted models
 - Calculate rule-based signals with clear audit fields
 - Render Markdown and HTML daily reports
@@ -36,7 +36,16 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-4. Copy `.env.example` to `.env` and fill in your API keys:
+4. Optional: start Futu OpenD if you want AlphaX to use Futu/Moomoo quotes first:
+
+```bash
+# OpenD must be logged in with a Futu/Moomoo account that has the required quote permissions.
+# Default AlphaX settings expect OpenD on 127.0.0.1:11111.
+```
+
+Futu API access is routed through OpenD. Quote depth and availability depend on the market data permissions enabled on the logged-in account, so AlphaX keeps `yfinance` and `akshare` as fallbacks.
+
+5. Copy `.env.example` to `.env` and fill in your API keys:
 
 ```bash
 cp .env.example .env
@@ -47,8 +56,8 @@ Required keys:
 - `TWITTERAPI_IO_API_KEY`
 - `OPENROUTER_API_KEY`
 
-5. Adjust configs under `config/` if needed.
-6. Run the daily pipeline:
+6. Adjust configs under `config/` if needed.
+7. Run the daily pipeline:
 
 ```bash
 python scripts/run_daily.py

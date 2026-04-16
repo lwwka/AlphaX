@@ -89,6 +89,7 @@ def _build_summary(
                 "handle_counts": context["handle_counts"],
                 "signals": context["signal_rows"][:10],
                 "details": context["details"][:10],
+                "market_snapshots": context["market_snapshots"][:12],
                 "tweet_preview": context["tweet_preview"][:8],
                 "coverage_note": context["coverage_note"],
             }
@@ -161,11 +162,13 @@ def _build_context(
     ]
     coverage_note = _build_coverage_note(tweets, sentiments, signals)
     analysis = _build_analysis_sections(details, signal_rows, handle_counts, coverage_note)
+    market_snapshots = _build_market_snapshot_rows(prices, settings)
     return {
         "report_date": report_date,
         "summary": summary,
         "signal_rows": signal_rows,
         "details": details,
+        "market_snapshots": market_snapshots,
         "tweet_count": len(tweets),
         "sentiment_count": len(sentiments),
         "signal_count": len(signals),
@@ -207,6 +210,7 @@ def _write_excel_report(path: str, context: dict[str, Any]) -> None:
     summary_sheet.append(["executive_takeaway", context["analysis"]["executive_takeaway"]])
     summary_sheet.append(["signal_count", len(context["signal_rows"])])
     summary_sheet.append(["detail_count", len(context["details"])])
+    summary_sheet.append(["market_snapshot_count", len(context["market_snapshots"])])
     summary_sheet.append(["provider", context["provider"]])
     summary_sheet.append(["sentiment_model", context["sentiment_model"]])
     summary_sheet.append(["report_model", context["report_model"]])
@@ -219,6 +223,12 @@ def _write_excel_report(path: str, context: dict[str, Any]) -> None:
     signals_sheet.append(columns)
     for row in _report_rows(context):
         signals_sheet.append([row[column] for column in columns])
+
+    market_sheet = workbook.create_sheet("Market Snapshots")
+    market_columns = _market_snapshot_columns()
+    market_sheet.append(market_columns)
+    for row in context["market_snapshots"]:
+        market_sheet.append([row[column] for column in market_columns])
 
     for sheet in workbook.worksheets:
         _autosize_worksheet(sheet)
@@ -241,6 +251,22 @@ def _write_word_report(path: str, context: dict[str, Any]) -> None:
         f"本次共抓取 {context['tweet_count']} 則推文，完成 {context['sentiment_count']} 筆情緒分析，產生 {context['signal_count']} 筆信號。"
     )
     document.add_paragraph(context["coverage_note"])
+
+    if context["market_snapshots"]:
+        document.add_heading("市場快照", level=1)
+        market_table = document.add_table(rows=1, cols=6)
+        market_table.style = "Table Grid"
+        header_cells = market_table.rows[0].cells
+        for index, title in enumerate(["股票", "價格", "漲跌幅", "成交量", "20 日均量", "來源"]):
+            header_cells[index].text = title
+        for row in context["market_snapshots"]:
+            cells = market_table.add_row().cells
+            cells[0].text = str(row["symbol"])
+            cells[1].text = str(row["close"])
+            cells[2].text = f'{row["change_pct"]}%'
+            cells[3].text = str(row["volume"])
+            cells[4].text = str(row["avg_20d_volume"])
+            cells[5].text = str(row["source"])
 
     document.add_heading("一句話結論", level=1)
     document.add_paragraph(context["analysis"]["executive_takeaway"])
@@ -324,6 +350,32 @@ def _report_rows(context: dict[str, Any]) -> list[dict[str, Any]]:
     return [
         {column: item.get(column, "") for column in _report_columns()}
         for item in context["details"]
+    ]
+
+
+def _market_snapshot_columns() -> list[str]:
+    return ["symbol", "close", "change_pct", "volume", "avg_20d_volume", "source", "as_of"]
+
+
+def _build_market_snapshot_rows(
+    prices: dict[str, PriceSnapshot],
+    settings: dict[str, Any],
+) -> list[dict[str, Any]]:
+    markets = settings.get("markets", {})
+    preferred_order = list(markets.get("watchlist", [])) + list(markets.get("benchmarks", []))
+    ordered_symbols = [symbol for symbol in preferred_order if symbol in prices]
+    ordered_symbols.extend(sorted(symbol for symbol in prices if symbol not in set(ordered_symbols)))
+    return [
+        {
+            "symbol": symbol,
+            "close": round(prices[symbol].close, 4),
+            "change_pct": round(prices[symbol].change_pct, 3),
+            "volume": round(prices[symbol].volume, 2),
+            "avg_20d_volume": round(prices[symbol].avg_20d_volume, 2),
+            "source": prices[symbol].source,
+            "as_of": prices[symbol].as_of.isoformat(),
+        }
+        for symbol in ordered_symbols
     ]
 
 

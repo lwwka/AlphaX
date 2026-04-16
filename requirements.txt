@@ -4,6 +4,7 @@ PyYAML>=6.0.1
 python-dotenv>=1.0.1
 yfinance>=0.2.54
 akshare>=1.16.0
+futu-api>=10.2.6218
 jinja2>=3.1.4
 tenacity>=9.0.0
 markdown>=3.7
